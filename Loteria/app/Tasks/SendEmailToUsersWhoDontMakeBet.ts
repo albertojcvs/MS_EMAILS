@@ -25,8 +25,37 @@ export default class SendEmailToUsersWhoDontMakeBet extends BaseTask {
             lastBet.createdAt.startOf('day').toSeconds() >=
           prazoEmSegundos
         ) {
+          const producer = new Producer()
+          await producer.produce({
+            topic: 'send-email-make-new-bet',
+            messages: [
+              {
+                value: JSON.stringify({
+                  to: user.email,
+                  from: 'loteria@loteria.com',
+                  subject: "Let's make new bets",
+                  username: user.username,
+                }),
+              },
+            ],
+          })
         }
       } else {
+        const producer = new Producer()
+
+        await producer.produce({
+          topic: 'send-email-make-new-bet',
+          messages: [
+            {
+              value: JSON.stringify({
+                to: user.email,
+                from: 'loteria@loteria.com',
+                subject: "Let's make new bets",
+                username: user.username,
+              }),
+            },
+          ],
+        })
       }
     }
   }

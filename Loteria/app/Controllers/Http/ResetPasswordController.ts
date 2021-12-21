@@ -18,6 +18,21 @@ export default class ResetPasswordController {
 
     await user.save()
 
+    const producer = new Producer()
+    await producer.produce({
+      topic: 'send-email-reset-password',
+      messages: [
+        {
+          value: JSON.stringify({
+            to: user.email,
+            from: 'loteria@loteria.com',
+            subject: 'Reset Password',
+            username: user.username,
+            url,
+          }),
+        },
+      ],
+    })
   }
   public async resetPassword({ request, response }: HttpContextContract) {
     const { password, token } = await request.validate(ResetPasswordValidator)
@@ -39,6 +54,20 @@ export default class ResetPasswordController {
       user.token_created_at = null
       await user.save()
 
+      const producer = new Producer()
+      await producer.produce({
+        topic: 'send-email-password-reseted',
+        messages: [
+          {
+            value: JSON.stringify({
+              to: user.email,
+              from: 'loteria@loteria.com',
+              subject: 'Your password was reseted',
+              username: user.username,
+            }),
+          },
+        ],
+      })
     } else {
       return response.status(409).send({ error: { message: 'The user does not have a token!' } })
     }

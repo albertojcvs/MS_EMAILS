@@ -77,6 +77,21 @@ export default class BetsController {
     const user_id = bets[0].user_id
 
     const user = await User.findOrFail(user_id)
+    const producer = new Producer()
+    await producer.produce({
+      topic: 'send-email-new-bets',
+      messages: [
+        {
+          value: JSON.stringify({
+            to: user.email,
+            from: 'loteria@loteria.com',
+            subject: 'Your new bets!',
+            username: user.username,
+            bets: betsToEmail,
+          }),
+        },
+      ],
+    })
     return newBets
   }
 

@@ -56,6 +56,21 @@ export default class UsersController {
       .select('id', 'username', 'email', 'created_at', 'updated_at')
       .where('id', user.id)
 
+      const producer = new Producer()
+
+    await producer.produce({
+      topic: 'send-email-new-user',
+      messages: [
+        {
+          value: JSON.stringify({
+            to: user.email,
+            from: 'loteria@loteria.com',
+            subject: 'Welcome',
+            username,
+          }),
+        },
+      ],
+    })
     return userCreated
   }
 
