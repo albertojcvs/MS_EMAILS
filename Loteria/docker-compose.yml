@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    command: node ace serve --watch
+    ports:
+      - 3333:3333
+    volumes:
+      - .:/usr/app
+    networks:
+      - loteria-network
+      - loteria-service-network
+    depends_on:
+      - db
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: docker
+      MYSQL_DATABASE: prova_adonis
+    networks:
+      - loteria-service-network
+
+networks:
+  loteria-network:
+    external: true
+
+  loteria-service-network:
+    driver: bridge
+    external: false
