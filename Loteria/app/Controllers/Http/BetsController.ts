@@ -5,6 +5,7 @@ import CreateBetValidator from 'App/Validators/CreateBetValidator'
 import User from 'App/Models/User'
 import Cart from 'App/Models/Cart'
 import { Producer } from 'App/Kafka/Producer'
+import Permission from 'App/Models/Permission'
 
 interface BetToMail {
   numbers: number[]
@@ -92,6 +93,36 @@ export default class BetsController {
         },
       ],
     })
+    const adminPermission = await Permission.findByOrFail('name', 'admin')
+    const admins = await User.query()
+      .join('user_permissions', (query) => {
+        query.on((subquery) => {
+          subquery
+            .on('users.id', '=', 'user_permissions.user_id')
+            .andOnVal('user_permissions.permission_id', '=', adminPermission.id.toString())
+        })
+      })
+      .select('*')
+
+    admins.forEach(async (admin) => {
+      const producer = new Producer()
+      await producer.produce({
+        topic: 'send-email-new-bets-to-adms',
+        messages: [
+          {
+            value: JSON.stringify({
+              to: admin.email,
+              from: 'loteria@loteria.com',
+              subject: 'A player made new bets!',
+              adminUsername:admin.username,
+              playerUsername: user.username,
+              bets: betsToEmail,
+            }),
+          },
+        ],
+      })
+    })
+
     return newBets
   }
 
@@ -166,6 +197,7 @@ export default class BetsController {
         },
       ],
     })
+
     return newBets
   }
 
