@@ -1,7 +1,9 @@
 import { Kafka, Consumer as KafkaConsumer } from "kafkajs";
+import mail from "../configs/mail";
 import { MailTrapProvider } from "../providers/implementations/MailTrapProvider";
 import { SendMakeNewBetsEmails } from "./handlers/SendMakeNewBetsEmail";
 import { SendNewBetsEmail } from "./handlers/SendNewBetsEmail";
+import { SendNewbetsToAdmsEmail } from "./handlers/SendNewBetsToAdmsEmail";
 import { SendPasswordResetedEmai } from "./handlers/SendPasswordResetedEmail";
 import { SendResetPasswordEmail } from "./handlers/SendResetPasswordEmail";
 import { SendWelcomeEmail } from "./handlers/SendWelcomeEmail";
@@ -28,20 +30,19 @@ export class Consumer {
       "send-email-make-new-bet",
       "send-email-reset-password",
       "send-email-password-reseted",
-
-    ]
+      "send-email-new-bets-to-adms",
+    ];
 
     await Promise.all(
       topics.map((topic) => {
         console.log(topic);
-        
+
         return this.consumer.subscribe({ topic });
       })
     );
 
     await this.consumer.run({
       eachMessage: async ({ topic, message }) => {
-        console.log("aaaaaaaaa");
         const data = JSON.parse(message.value?.toString() || "");
 
         switch (topic) {
@@ -70,6 +71,12 @@ export class Consumer {
               mailTrapProvider
             );
             await sendPasswordResetedEmail.handle(data);
+            break;
+          case "send-email-new-bets-to-adms":
+            const sendNewbetsToAdmsEmail = new SendNewbetsToAdmsEmail(
+              mailTrapProvider
+            );
+            await sendNewbetsToAdmsEmail.handle(data);
             break;
           default:
             console.log("ERROR");
